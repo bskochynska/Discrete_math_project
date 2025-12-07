@@ -1,4 +1,6 @@
-def read_file(filename, n, decrypt=None, inplace=None):
+import argparse
+import sys
+def main():
 
     uppercase_letters = ["А", "Б", "В", "Г", "Ґ", "Д", "Е", "Є", "Ж", "З", "И", \
 "І", "Ї", "Й", "К", "Л", "М", "Н", "О", "П", "Р", "С", \
@@ -8,38 +10,67 @@ def read_file(filename, n, decrypt=None, inplace=None):
 "і", "ї", "й", "к", "л", "м", "н", "о", "п", "р", "с", \
 "т", "у", "ф", "х", "ц", "ч", "ш", "щ", "ь", "ю", "я"]
 
-    if not isinstance(filename, str):
-        return 'Введіть коректний шлях до файлу'
-    if not isinstance(n, int):
-        return 'Введіть коректне число зміщення'
+    parser = argparse.ArgumentParser(
+        description='Програма для шифрування/дешифрування файлів шифром Цезаря з підтримкою кирилиці та латиниці.')
+
+    parser.add_argument(
+        'file_path',
+        help='Шлях до файлу, який необхідно обробити.')
+
+    parser.add_argument(
+        '--offset',
+        type=int,
+        default=13,
+        help='Величина зсуву (ціле число). За замовчуванням: 13.')
+
+    parser.add_argument(
+        '--decrypt',
+        action='store_true',
+        help='Включає режим дешифрування.')
+
+    parser.add_argument(
+        '--inplace',
+        action='store_true',
+        help='Якщо присутній, перезаписує вихідний файл результатом.')
+
+    args = parser.parse_args()
+    shift = args.offset
+    if args.decrypt:
+        shift = -args.offset
 
     try:
-        with open(filename, 'r', encoding='utf-8') as file:
-            line = file.read()
+        with open(args.file_path, 'r', encoding='utf-8') as file:
+            lines = file.read()
             result = ''
-            if decrypt:
-                n = -n
-            for i in line:
-                if 65 <= ord(i) <= 90:
-                    result += chr(((ord(i)-65) + n)%26 + 65)
-                elif 97 <= ord(i) <= 122:
-                    result += chr(((ord(i)-97) + n)%26 + 97)
-                elif i in uppercase_letters:
-                    result += uppercase_letters[(uppercase_letters.index(i) + n)%33]
-                elif i in lowercase_letters:
-                    result += lowercase_letters[(lowercase_letters.index(i) + n)%33]
+            for el in lines:
+                if 65 <= ord(el) <= 90:
+                    result += chr(((ord(el)-65) + shift)%26 + 65)
+                elif 97 <= ord(el) <= 122:
+                    result += chr(((ord(el)-97) + shift)%26 + 97)
+                elif el in uppercase_letters:
+                    result += uppercase_letters[(uppercase_letters.index(el) + shift)%33]
+                elif el in lowercase_letters:
+                    result += lowercase_letters[(lowercase_letters.index(el) + shift)%33]
                 else:
-                    result += i
+                    result += el
     except FileNotFoundError:
-        return 'Message had been writen to file'
-
-    if inplace:
+        print(f'Помилка: Файл "{args.file_path}" не знайдено.')
+        sys.exit(1)
+    except Exception as e:
+        print(f'Помилка при читанні файлу: {e}')
+        sys.exit(1)
+    processed_text = "".join(result)
+    if args.inplace:
         try:
-            with open(filename, 'w', encoding='utf-8') as f:
-                f.write(result)
-        except FileNotFoundError:
-            return 'Message had been writen to file'
+            with open(args.file_path, 'w', encoding='utf-8') as f:
+                f.write(processed_text)
+            print(f"Операція '{'Дешифрування' if args.decrypt else 'Шифрування'}' успішно виконана на місці.")
+        except Exception as e:
+            print(f'Помилка при записі файлу: {e}')
+            sys.exit(1)
 
-        return result
+    else:
+        print(processed_text)
 
-print(read_file('code', 4, decrypt=1, inplace=1))
+if __name__ == '__main__':
+    main()
