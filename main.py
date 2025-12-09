@@ -26,6 +26,8 @@ from copy import deepcopy
 from data_input import read_packages
 from data_input import read_vehicles
 from data_input import read_graph
+from greedy import calculate_greedy_truck_route
+
 
 INF = float('inf')
 
@@ -182,7 +184,10 @@ def find_optimal_delivery_plan(package_idx, vehicles, packages, warehouse, dist_
         for v in vehicles:
             if not v['packages']:
                 continue
-            d, route = calculate_optimal_truck_route(warehouse, v['packages'], dist_matrix)
+            destinations = set(p['destination'] for p in v['packages'])
+            tsp_solver = choose_tsp_solver(len(destinations))
+
+            d, route = tsp_solver(warehouse, v['packages'], dist_matrix)
 
             if d == INF:
                 possible_config = False
@@ -217,6 +222,15 @@ def find_optimal_delivery_plan(package_idx, vehicles, packages, warehouse, dist_
 
     if not is_placed:
         find_optimal_delivery_plan(package_idx + 1, vehicles, packages, warehouse, dist_matrix, current_best_solution)
+
+def choose_tsp_solver(num_destinations):
+    """
+    Returns the function to use for TSP depending on number of destinations.
+    """
+    if num_destinations <= 10:
+        return calculate_optimal_truck_route
+    else:
+        return calculate_greedy_truck_route
 
 def main():
     """
