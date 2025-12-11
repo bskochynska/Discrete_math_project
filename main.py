@@ -23,11 +23,11 @@ The script requires three CSV files in the working directory:
 """
 import argparse
 from copy import deepcopy
+from greedy import calculate_greedy_truck_route
 from data_input import read_packages
 from data_input import read_vehicles
 from data_input import read_graph
-from greedy import calculate_greedy_truck_route
-
+from visualization import animate_delivery
 
 INF = float('inf')
 
@@ -243,6 +243,7 @@ def main():
     parser.add_argument("vehicles_file", help="Path to the vehicles CSV file (e.g., vehicles.csv)")
     parser.add_argument("packages_file", help="Path to the packages CSV file (e.g., packages.csv)")
     parser.add_argument("--warehouse", default="Kyiv", help="Name of the warehouse city (default: Kyiv)")
+    parser.add_argument("--viz", action="store_true", help="Увімкнути візуалізацію")
 
     args = parser.parse_args()
 
@@ -306,6 +307,8 @@ def main():
         unassigned = [p for p in packages if p['id'] not in assigned_ids]
         if unassigned:
             print(f"\nНе влізли: {sum(p['weight'] for p in unassigned)} кг")
+        if args.viz and best_solution['vehicles']:
+            animate_delivery(best_solution['vehicles'], graph, warehouse_location)
 
 if __name__ == "__main__":
     main()
